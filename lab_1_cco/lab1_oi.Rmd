@@ -84,3 +84,50 @@ ex_5 <- sf_trees %>%
 
 ```
 
+
+**Part 2** Using `tmap`
+
+###Step 1 - convert lat and lon to spatial points using `st_as_sf()`
+```{r}
+blackwood_acacia_sf <- blackwood_acacia_df %>% 
+  drop_na(lat , lon) %>% 
+  st_as_sf(coords= c('lon' , 'lat'))
+
+### We need to tell R the coordinate reference system 
+st_crs(blackwood_acacia_sf) <- 4326
+
+ggplot(data = blackwood_acacia_sf) + 
+  geom_sf(color = "darkgreen") + 
+  theme_minimal()
+```
+### now that it is spatical we can add a map 
+So read in SF shape file and add to map
+```{r}
+sf_map <- read_sf(here("data" , "sf_map" , "tl_2017_06075_roads.shp"))
+
+sf_map_transform <- st_transform(sf_map, 4326)
+
+ggplot(data = sf_map_transform) + 
+  geom_sf()
+```
+```{r}
+## Combining the maps 
+ggplot() + 
+  geom_sf(data = sf_map , 
+          size = .1 ,
+          color = "darkgrey") + 
+  geom_sf(data = blackwood_acacia_sf, 
+         color = "red", 
+         size = 0.5) + 
+  theme_void() 
+```
+### Now an interactive map! 
+
+```{r}
+tmap_mode("view")
+
+tm_shape(blackwood_acacia_sf) + 
+  tm_dots() # not working :()
+```
+
+
