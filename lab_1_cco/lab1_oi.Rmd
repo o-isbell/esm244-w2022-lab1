@@ -1,0 +1,86 @@
+---
+title: "lab1"
+author: "Olivia Isbell"
+date: "1/7/2022"
+output: html_document
+---
+
+```{r setup, include=TRUE, messages = FALSE , warnings = FALSE }
+knitr::opts_chunk$set(echo = TRUE, messages = FALSE , warnings = FALSE)
+#attach packages 
+
+library(tidyverse)
+library(here)
+library(sf)
+library(tmap)
+```
+
+### Reading in the data 
+```{r}
+sf_trees <- read_csv(here("data" , "sf_trees" , "sf_trees.csv"), 
+                     show_col_types = FALSE)
+
+```
+
+
+### Part 1: Wangling data and ggplot review 
+
+**Example 1:** Find counts of observation by `legal_status` and wrangle a bit  
+```{r}
+### method 1 
+sf_trees %>% 
+  group_by(legal_status) %>% 
+  summarize(tree_cout = n()) #counts number of rows 
+
+### method 2 
+top_5_status <- sf_trees %>% 
+  count(legal_status) %>% 
+  drop_na(legal_status) %>%  #take of na in column
+  rename(tree_count = n) %>%  
+  relocate(tree_count) %>% #brings to the front 
+  slice_max(tree_count, n = 5) %>% 
+  arrange(desc(tree_count)) #can also use - for desc or none for lowest to highest
+```
+
+Make a graph 
+```{r}
+ggplot(data = top_5_status, aes(x= fct_reorder(legal_status, tree_count), y = tree_count)) +
+  geom_col(fill = "darkgreen")+ 
+  coord_flip() + 
+  theme_minimal() + 
+  labs  (x= "Tree Counts" , y = "legal Status")
+  
+```
+**Example 2** Only going to keep observations 
+
+```{r}
+permitted_data_sf <- sf_trees %>% 
+  filter(legal_status == "Permitted Site" & caretaker == "MTA")
+```
+
+**Example 3**
+
+```{r}
+blackwood_acacia_df <- sf_trees %>% 
+  filter(species ==  "Acacia melanoxylon :: Blackwood Acacia") %>% #str_detect did not work for me :()
+  select(legal_status, date , lat = latitude, lon = longitude)
+
+#make a little graph of the locations 
+ggplot(data = blackwood_acacia_df, aes(x = lon, y =lat)) + 
+  geom_point(color = "darkgreen")
+
+```
+**Example 4** Use new function called separate 
+```{r}
+ sf_trees_separate <- sf_trees %>% 
+  separate(species, into = c("spp_scientific" , "spp_common"), sep = "::")
+
+```
+
+**Example 5** Use unite 
+```{r}
+ex_5 <- sf_trees %>% 
+  unite("id_status" , tree_id, legal_status, sep = "_COOL_")
+
+```
+
